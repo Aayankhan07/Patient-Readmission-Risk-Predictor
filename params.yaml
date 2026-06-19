@@ -1,0 +1,43 @@
+data:
+  raw_path: "data/raw/diabetic_data.csv"
+  processed_dir: "data/processed"
+  test_size: 0.15
+  val_size: 0.15
+  random_state: 42
+
+models:
+  logistic_regression:
+    penalty: "l2"
+    solver: "lbfgs"
+    max_iter: 1000
+    random_state: 42
+  
+  svm:
+    probability: true
+    gamma: "scale"
+    random_state: 42
+  
+  random_forest:
+    random_state: 42
+    n_jobs: -1
+  
+  xgboost:
+    eval_metric: "aucpr"
+    random_state: 42
+    scale_pos_weight: 9.0  # approximate class imbalance ratio (10% readmitted)
+
+ann:
+  architecture:
+    input_dim: null  # dynamically determined
+    dense1: 256
+    dense2: 128
+    dense3: 64
+    dropout1: 0.3
+    dropout2: 0.2
+  training:
+    learning_rate: 0.001
+    epochs: 100
+    batch_size: 256
+    patience_early_stopping: 10
+    patience_lr_plateau: 5
+    lr_factor: 0.5

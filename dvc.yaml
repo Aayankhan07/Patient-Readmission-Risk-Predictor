@@ -1,0 +1,23 @@
+stages:
+  prepare:
+    cmd: python src/data/preprocessor.py
+    deps:
+      - data/raw/diabetic_data.csv
+      - src/data/preprocessor.py
+    outs:
+      - data/processed/
+      - models/preprocessor.pkl
+  
+  train_classical:
+    cmd: python scripts/train_all.py --model-type classical
+    deps:
+      - data/processed/
+      - src/models/classical.py
+    outs:
+      - mlruns/
+  
+  train_ann:
+    cmd: python scripts/train_all.py --model-type ann
+    deps:
+      - data/processed/
+      - src/models/ann.py
