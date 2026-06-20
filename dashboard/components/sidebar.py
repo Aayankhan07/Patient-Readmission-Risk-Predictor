@@ -23,16 +23,16 @@ def render_sidebar():
         if response.status_code == 200:
             health_data = response.json()
             if health_data.get("status") == "ok":
-                st.sidebar.success("🟢 API Connected")
+                st.sidebar.success("API Connected")
                 st.sidebar.caption(
                     f"Model: {health_data.get('version')} (Loaded)"
                 )
             else:
-                st.sidebar.warning("🟡 API Degrading (No Model Loaded)")
+                st.sidebar.warning("API Degrading (No Model Loaded)")
         else:
-            st.sidebar.error("🔴 API Error Code")
+            st.sidebar.error("API Error Code")
     except Exception:
-        st.sidebar.error("🔴 API Offline")
+        st.sidebar.error("Prediction service unreachable.")
         
     st.sidebar.divider()
     

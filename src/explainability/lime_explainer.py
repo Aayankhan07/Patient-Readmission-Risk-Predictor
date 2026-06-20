@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
 from lime.lime_tabular import LimeTabularExplainer
-from tensorflow.keras.models import Sequential
+try:
+    from tensorflow.keras.models import Sequential
+    HAS_TENSORFLOW = True
+except ImportError:
+    Sequential = None
+    HAS_TENSORFLOW = False
 
 def explain_patient_lime(model, X_train: pd.DataFrame, patient_preprocessed: pd.DataFrame) -> str:
     """
@@ -10,7 +15,7 @@ def explain_patient_lime(model, X_train: pd.DataFrame, patient_preprocessed: pd.
         str: HTML representation of the explanation.
     """
     # Create prediction function wrapper based on model type
-    if isinstance(model, Sequential):
+    if HAS_TENSORFLOW and Sequential is not None and isinstance(model, Sequential):
         def predict_fn(x):
             # For tensorflow ANN model
             # Convert inputs to float32

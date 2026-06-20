@@ -1,4 +1,5 @@
 import os
+os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
 import joblib
 import pandas as pd
 import numpy as np
@@ -10,8 +11,8 @@ import mlflow
 from mlflow.tracking import MlflowClient
 
 from src.utils.config import PREPROCESSOR_PATH, MODEL_DIR
-from src.data.preprocessor import ReadmissionPreprocessor
-from src.data.loader import generate_synthetic_data, preprocess_raw_dataset
+from src.data.preprocessor import ReadmissionPreprocessor, preprocess_raw_dataset
+from src.data.loader import generate_synthetic_data
 
 # Import routes
 from api.routes import health, predict, explain
@@ -55,7 +56,19 @@ def load_champion_model_and_preprocessor(app: FastAPI):
         app.state.X_background = pd.DataFrame(dummy_data, columns=dummy_feats)
 
     # 3. Load Model from MLflow
-    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000"))
+    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    if tracking_uri.startswith("http"):
+        import requests
+        try:
+            requests.get(tracking_uri, timeout=1.0)
+            mlflow.set_tracking_uri(tracking_uri)
+            print(f"Connected to MLflow tracking server at {tracking_uri}")
+        except Exception:
+            print(f"MLflow tracking server at {tracking_uri} is unreachable. Falling back to local 'mlruns' directory.")
+            mlflow.set_tracking_uri("mlruns")
+    else:
+        mlflow.set_tracking_uri(tracking_uri)
+        
     client = MlflowClient()
     
     app.state.model = None

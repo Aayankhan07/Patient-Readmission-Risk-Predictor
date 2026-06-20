@@ -167,3 +167,12 @@ mlflow.db-journal
 # Ignore temporary plots generated during training
 /temp_plots/
 temp_plots/
+
+# Ignore OneDrive / OS sync duplicate copies
+* (1).*
+* (2).*
+* (3).*
+* (4).*
+* (5).*
+* (Conflict)*
+

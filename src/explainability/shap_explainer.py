@@ -4,7 +4,13 @@ import numpy as np
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from tensorflow.keras.models import Sequential
+try:
+    from tensorflow.keras.models import Sequential
+    HAS_TENSORFLOW = True
+except ImportError:
+    Sequential = None
+    HAS_TENSORFLOW = False
+
 
 def get_shap_explainer(model, X_background: pd.DataFrame):
     """
@@ -21,7 +27,7 @@ def get_shap_explainer(model, X_background: pd.DataFrame):
         return shap.TreeExplainer(model)
     elif isinstance(model, LogisticRegression):
         return shap.LinearExplainer(model, X_bg_sampled)
-    elif isinstance(model, Sequential):
+    elif HAS_TENSORFLOW and Sequential is not None and isinstance(model, Sequential):
         # TensorFlow Keras ANN
         # Convert background to float32 numpy array for TF
         bg_array = X_bg_sampled.values.astype(np.float32)
@@ -42,7 +48,7 @@ def explain_patient_shap(model, X_background: pd.DataFrame, patient_preprocessed
     explainer = get_shap_explainer(model, X_background)
     
     # Generate SHAP values for the patient row
-    if isinstance(model, Sequential):
+    if HAS_TENSORFLOW and Sequential is not None and isinstance(model, Sequential):
         # Keras ANN case
         patient_arr = patient_preprocessed.values.astype(np.float32)
         shap_vals = explainer.shap_values(patient_arr)

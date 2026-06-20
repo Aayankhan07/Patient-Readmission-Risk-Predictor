@@ -19,57 +19,129 @@ st.set_page_config(
 )
 
 # Custom premium styling injection
+# Custom premium styling injection
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
     
     html, body, [class*="css"] {
-        font-family: 'Outfit', sans-serif;
+        font-family: 'IBM Plex Sans', sans-serif;
+        color: #1C1C1E;
     }
     
     .stApp {
-        background-color: #0E1117;
+        background-color: #F7F6F4;
+    }
+    
+    /* Sidebar navy-900 background */
+    [data-testid="stSidebar"] {
+        background-color: #0F2238 !important;
+        color: #FFFFFF !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
+    [data-testid="stSidebar"] input {
+        color: #1C1C1E !important;
+    }
+    [data-testid="stSidebar"] div[data-baseweb="input"] > div {
+        background-color: #FFFFFF !important;
+        border: 1px solid #DDDAD3 !important;
     }
     
     h1, h2, h3, h4, h5, h6 {
-        color: #FFFFFF !important;
+        font-family: 'Source Serif 4', serif !important;
+        color: #0F2238 !important;
         font-weight: 600 !important;
     }
     
     .main-header {
-        font-size: 38px;
-        font-weight: 700;
-        background: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 32px;
+        font-weight: 600;
+        color: #0F2238 !important;
         margin-bottom: 5px;
+        font-family: 'Source Serif 4', serif !important;
     }
     
     .sub-header {
-        color: #A0AAB2;
-        font-size: 16px;
+        color: #6B6B6E;
+        font-size: 14px;
         margin-bottom: 30px;
+        font-family: 'IBM Plex Sans', sans-serif;
     }
     
-    /* Beautiful tabs styling */
+    /* Streamlit input styling */
+    div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, input {
+        border: 1px solid #DDDAD3 !important;
+        border-radius: 4px !important;
+        background-color: #FFFFFF !important;
+        color: #1C1C1E !important;
+    }
+    
+    /* Streamlit tabs styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 5px;
+        border-bottom: 1px solid #DDDAD3;
     }
     .stTabs [data-baseweb="tab"] {
-        background-color: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 6px;
-        color: #A0AAB2;
-        padding: 10px 20px;
+        background-color: #EFEDE9;
+        border: 1px solid #DDDAD3;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        color: #6B6B6E;
+        padding: 8px 16px;
+        font-family: 'IBM Plex Sans', sans-serif;
     }
     .stTabs [data-baseweb="tab"]:hover {
-        color: #FFFFFF;
-        background-color: rgba(255, 255, 255, 0.05);
+        color: #0F2238;
+        background-color: #EFEDE9;
     }
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, rgba(79,172,254,0.15) 0%, rgba(0,242,254,0.15) 100%) !important;
-        border: 1px solid #00F2FE !important;
-        color: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #DDDAD3 !important;
+        border-bottom: 1px solid #FFFFFF !important;
+        color: #0F2238 !important;
+        font-weight: 500;
+    }
+    
+    /* Styled tables (Leaderboard / Dataframes) */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+    th {
+        background-color: #EFEDE9 !important;
+        color: #1C1C1E !important;
+        font-family: 'IBM Plex Sans', sans-serif !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        font-size: 12px !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #DDDAD3 !important;
+        text-align: left !important;
+    }
+    td {
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #DDDAD3 !important;
+        color: #1C1C1E !important;
+        height: 48px !important;
+    }
+    tr:hover {
+        background-color: #F7F6F4 !important;
+    }
+    /* Right-align numeric columns and use IBM Plex Mono */
+    td:nth-child(3), td:nth-child(4), td:nth-child(5), td:nth-child(6),
+    th:nth-child(3), th:nth-child(4), th:nth-child(5), th:nth-child(6) {
+        text-align: right !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-weight: 500 !important;
+    }
+    /* Champion row highlight (first row) */
+    tr:nth-child(1) td {
+        border-left: 3px solid #2A9D8F !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -78,14 +150,14 @@ st.markdown("""
 api_url = render_sidebar()
 
 # 2. Main Dashboard Headers
-st.markdown('<h1 class="main-header">Clinical Readmission Risk Predictor</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">Patient Readmission Risk Predictor</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-header">Explainable AI tool for predicting 30-day patient readmission risk at discharge</p>', unsafe_allow_html=True)
 
 # 3. Initialize Tabs
 tab_single, tab_bulk, tab_leaderboard = st.tabs([
-    "🏥 Patient Risk Assessor", 
-    "📁 Bulk Predictor (CSV)", 
-    "🏆 Model Leaderboard"
+    "Patient Risk Assessor", 
+    "Bulk Predictor (CSV)", 
+    "Model Leaderboard"
 ])
 
 # ================= TAB 1: Single Patient Assessor =================
@@ -266,7 +338,7 @@ with tab_leaderboard:
     # Leaderboard table
     leaderboard_data = {
         "Rank": [1, 2, 3, 4, 5],
-        "Model Name": ["XGBoost Classifier (Champion)", "Keras ANN (Deep Learning)", "Random Forest Classifier", "Logistic Regression", "Support Vector Machine (SVM)"],
+        "Model Name": ["★ XGBoost Classifier (Champion)", "Keras ANN (Deep Learning)", "Random Forest Classifier", "Logistic Regression", "Support Vector Machine (SVM)"],
         "Precision-Recall AUC (PR-AUC)": [0.742, 0.729, 0.718, 0.684, 0.672],
         "ROC-AUC Score": [0.812, 0.803, 0.795, 0.764, 0.748],
         "F1 Score": [0.658, 0.642, 0.635, 0.612, 0.598],

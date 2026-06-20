@@ -20,8 +20,8 @@ def render_patient_shap_chart(shap_values: dict, base_value: float = 0.5):
     features.reverse()
     values.reverse()
     
-    # Colors: Coral Red for positive impact, Emerald Green for negative impact
-    colors = ['#FF1744' if val >= 0 else '#00E676' for val in values]
+    # Colors: Amber-Red (#E76F51) for positive impact, Teal (#2A9D8F) for negative impact
+    colors = ['#E76F51' if val >= 0 else '#2A9D8F' for val in values]
     
     fig = go.Figure()
     
@@ -32,7 +32,7 @@ def render_patient_shap_chart(shap_values: dict, base_value: float = 0.5):
         marker_color=colors,
         text=[f"{val:+.3f}" for val in values],
         textposition='outside',
-        textfont=dict(color='#FFFFFF', size=11),
+        textfont=dict(color='#1C1C1E', size=11, family='IBM Plex Sans, sans-serif'),
         hovertemplate="<b>Feature:</b> %{y}<br><b>SHAP Value:</b> %{x:+.4f}<extra></extra>",
     ))
     
@@ -43,19 +43,18 @@ def render_patient_shap_chart(shap_values: dict, base_value: float = 0.5):
             'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top',
-            'font': {'size': 16, 'color': '#FFFFFF'}
+            'font': {'size': 16, 'color': '#0F2238', 'family': 'Source Serif 4, serif'}
         },
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         xaxis=dict(
-            title="Impact on Prediction Risk",
-            titlefont=dict(color="#A0AAB2"),
-            tickfont=dict(color="#A0AAB2"),
-            gridcolor="rgba(255,255,255,0.05)",
-            zerolinecolor="rgba(255,255,255,0.2)"
+            title=dict(text="Impact on Prediction Risk", font=dict(color="#6B6B6E", family='IBM Plex Sans, sans-serif')),
+            tickfont=dict(color="#6B6B6E", family='IBM Plex Sans, sans-serif'),
+            gridcolor="rgba(0,0,0,0.05)",
+            zerolinecolor="rgba(0,0,0,0.2)"
         ),
         yaxis=dict(
-            tickfont=dict(color="#FFFFFF", size=11),
+            tickfont=dict(color="#1C1C1E", size=11, family='IBM Plex Sans, sans-serif'),
             gridcolor="rgba(0,0,0,0)"
         ),
         margin=dict(l=150, r=40, t=50, b=40),
@@ -81,8 +80,7 @@ def render_global_importance_chart():
         y=df["Feature"],
         orientation='h',
         marker=dict(
-            color=df["Importance"],
-            colorscale=[[0, '#4FACFE'], [1, '#00F2FE']]
+            color='#0F2238'
         ),
         hovertemplate="<b>Feature:</b> %{y}<br><b>Relative Importance:</b> %{x:.2f}<extra></extra>"
     ))
@@ -97,18 +95,17 @@ def render_global_importance_chart():
             'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top',
-            'font': {'size': 16, 'color': '#FFFFFF'}
+            'font': {'size': 16, 'color': '#0F2238', 'family': 'Source Serif 4, serif'}
         },
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         xaxis=dict(
-            title="Relative Importance Score",
-            titlefont=dict(color="#A0AAB2"),
-            tickfont=dict(color="#A0AAB2"),
-            gridcolor="rgba(255,255,255,0.05)"
+            title=dict(text="Relative Importance Score", font=dict(color="#6B6B6E", family='IBM Plex Sans, sans-serif')),
+            tickfont=dict(color="#6B6B6E", family='IBM Plex Sans, sans-serif'),
+            gridcolor="rgba(0,0,0,0.05)"
         ),
         yaxis=dict(
-            tickfont=dict(color="#FFFFFF"),
+            tickfont=dict(color="#1C1C1E", family='IBM Plex Sans, sans-serif'),
             gridcolor="rgba(0,0,0,0)"
         ),
         margin=dict(l=150, r=40, t=50, b=40),
