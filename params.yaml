@@ -31,7 +31,6 @@ ann:
     input_dim: null  # dynamically determined
     dense1: 256
     dense2: 128
-    dense3: 64
     dropout1: 0.3
     dropout2: 0.2
   training:

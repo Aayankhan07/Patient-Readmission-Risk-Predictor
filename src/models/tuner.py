@@ -7,10 +7,10 @@ from src.models.classical import get_logistic_regression, get_svm, get_random_fo
 # Suppress Optuna logs to keep training output clean
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-def tune_model(model_name: str, X: np.ndarray, y: np.ndarray, n_trials: int = 15, timeout: int = 600):
+def tune_model(model_name: str, X: np.ndarray, y: np.ndarray, n_trials: int = 100, timeout: int = 1800):
     """
     Tunes hyperparameters for the specified model family using Optuna.
-    Optimizes for PR-AUC (Average Precision) using 3-fold Stratified Cross-Validation for speed.
+    Optimizes for PR-AUC (Average Precision) using 5-fold Stratified Cross-Validation.
     """
     print(f"Starting hyperparameter tuning for {model_name} (trials={n_trials})...")
     
@@ -30,17 +30,17 @@ def tune_model(model_name: str, X: np.ndarray, y: np.ndarray, n_trials: int = 15
             
         elif model_name == "random_forest":
             params = {
-                "n_estimators": trial.suggest_int("n_estimators", 100, 300),
-                "max_depth": trial.suggest_int("max_depth", 3, 12),
+                "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+                "max_depth": trial.suggest_int("max_depth", 3, 20),
                 "min_samples_split": trial.suggest_int("min_samples_split", 2, 10)
             }
             model_fn = lambda: get_random_forest(params)
             
         elif model_name == "xgboost":
             params = {
-                "n_estimators": trial.suggest_int("n_estimators", 100, 300),
-                "max_depth": trial.suggest_int("max_depth", 3, 8),
-                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2),
+                "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+                "max_depth": trial.suggest_int("max_depth", 3, 10),
+                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3),
                 "subsample": trial.suggest_float("subsample", 0.6, 1.0),
                 "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0)
             }
@@ -52,7 +52,7 @@ def tune_model(model_name: str, X: np.ndarray, y: np.ndarray, n_trials: int = 15
         else:
             raise ValueError(f"Unknown model name for tuning: {model_name}")
 
-        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
         pr_aucs = []
         
         for train_idx, val_idx in cv.split(X, y):
@@ -73,7 +73,11 @@ def tune_model(model_name: str, X: np.ndarray, y: np.ndarray, n_trials: int = 15
             
         return np.mean(pr_aucs)
 
-    study = optuna.create_study(direction="maximize")
+    study = optuna.create_study(
+        direction="maximize",
+        sampler=optuna.samplers.TPESampler(seed=42),
+        pruner=optuna.pruners.MedianPruner()
+    )
     study.optimize(objective, n_trials=n_trials, timeout=timeout)
     
     print(f"Tuning complete. Best Average Precision (PR-AUC): {study.best_value:.4f}")

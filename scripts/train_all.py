@@ -231,7 +231,7 @@ def main():
     parser.add_argument(
         "--trials", 
         type=int, 
-        default=5, 
+        default=100, 
         help="Number of tuning trials per model family if --tune is set."
     )
     args = parser.parse_args()

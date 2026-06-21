@@ -18,9 +18,7 @@ def build_ann_model(input_dim: int, learning_rate: float = None) -> Sequential:
         BatchNormalization(),
         Dropout(arch["dropout1"]),
         Dense(arch["dense2"], activation="relu"),
-        BatchNormalization(),
         Dropout(arch["dropout2"]),
-        Dense(arch["dense3"], activation="relu"),
         Dense(1, activation="sigmoid")
     ])
     

@@ -1,23 +1,27 @@
+import pytest
 from fastapi.testclient import TestClient
 from api.main import app
 
-client = TestClient(app)
+@pytest.fixture(scope="module")
+def client():
+    with TestClient(app) as c:
+        yield c
 
-def test_health_endpoint():
+def test_health_endpoint(client):
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] in ["ok", "degraded"]
     assert "version" in data
 
-def test_models_endpoint():
+def test_models_endpoint(client):
     response = client.get("/models")
     assert response.status_code == 200
     data = response.json()
-    assert "champion_model" in data
-    assert "type" in data["champion_model"]
+    assert "models" in data
+    assert isinstance(data["models"], list)
 
-def test_predict_and_explain_endpoints():
+def test_predict_and_explain_endpoints(client):
     # 1. Test Predict
     patient_payload = {
         "age": "[60-70)",
@@ -49,5 +53,6 @@ def test_predict_and_explain_endpoints():
     assert explain_data["patient_id"] == patient_id
     assert "shap_values" in explain_data
     assert "top_risk_factors" in explain_data
-    assert "lime_explanation" in explain_data
-    assert isinstance(explain_data["lime_explanation"], str)
+    assert "lime_html" in explain_data
+    assert "base_value" in explain_data
+    assert isinstance(explain_data["lime_html"], str)
