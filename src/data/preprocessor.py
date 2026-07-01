@@ -180,8 +180,8 @@ if __name__ == "__main__":
     # Save processed splits locally
     processed_dir = os.path.dirname(PREPROCESSOR_PATH).replace("models", "data/processed")
     os.makedirs(processed_dir, exist_ok=True)
-    X_train_res.assign(readmitted=y_train_res).to_csv(os.path.join(processed_dir, "train_processed.csv"), index=False)
-    X_val_scaled.assign(readmitted=y_val).to_csv(os.path.join(processed_dir, "val_processed.csv"), index=False)
-    X_test_scaled.assign(readmitted=y_test).to_csv(os.path.join(processed_dir, "test_processed.csv"), index=False)
+    X_train_res.assign(readmitted=y_train_res.values).to_csv(os.path.join(processed_dir, "train_processed.csv"), index=False)
+    X_val_scaled.assign(readmitted=y_val.values).to_csv(os.path.join(processed_dir, "val_processed.csv"), index=False)
+    X_test_scaled.assign(readmitted=y_test.values).to_csv(os.path.join(processed_dir, "test_processed.csv"), index=False)
     print("Preprocessing complete. Processed splits saved in data/processed/.")
 
