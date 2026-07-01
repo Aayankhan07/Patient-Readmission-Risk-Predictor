@@ -119,7 +119,7 @@ def train_classical_models(X_train, y_train, X_val, y_val, X_test, y_test, do_tu
                     os.remove(p)
                     
             # Log Model
-            mlflow.sklearn.log_model(model, "model")
+            mlflow.sklearn.log_model(model, "model", serialization_format="cloudpickle")
             print(f"Successfully logged {model_name} to MLflow.")
 
 def train_ann_model(X_train, y_train, X_val, y_val, X_test, y_test):
