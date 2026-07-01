@@ -135,6 +135,8 @@ def apply_smote(X: pd.DataFrame, y: pd.Series):
 if __name__ == "__main__":
     from src.data.loader import load_raw_data
     from src.data.splitter import split_data
+    # Import the class from the module namespace so that pickling works correctly
+    from src.data.preprocessor import ReadmissionPreprocessor
     
     print("Running data preprocessing stage...")
     # 1. Load Raw Dataset
