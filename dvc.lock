@@ -21,3 +21,33 @@ stages:
       hash: md5
       md5: bec179fb25720fda8571ddd9aeec7e69
       size: 4795
+  train_classical:
+    cmd: python -m scripts.train_all --model-type classical
+    deps:
+    - path: data/processed/
+      hash: md5
+      md5: 83e3091784e382eb821c5f631d7d13a8.dir
+      size: 150683
+      nfiles: 3
+    - path: src/models/classical.py
+      hash: md5
+      md5: 1094b0163012b14612abb7938824413b
+      size: 1935
+    outs:
+    - path: mlruns/
+      hash: md5
+      md5: db16e68de25188da5142158b58b47a40.dir
+      size: 506431
+      nfiles: 307
+  train_ann:
+    cmd: python -m scripts.train_all --model-type ann
+    deps:
+    - path: data/processed/
+      hash: md5
+      md5: 83e3091784e382eb821c5f631d7d13a8.dir
+      size: 150683
+      nfiles: 3
+    - path: src/models/ann.py
+      hash: md5
+      md5: 1148ffeabe2d75dc2c1d9119f18e7d73
+      size: 1120
