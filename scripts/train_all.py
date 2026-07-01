@@ -26,7 +26,18 @@ from src.evaluation.metrics import (
 )
 
 # Set up MLflow tracking URI (default to local mlruns if not in environment)
-mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000"))
+tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
+if tracking_uri.startswith("http"):
+    import requests
+    try:
+        requests.get(tracking_uri, timeout=2.0)
+        mlflow.set_tracking_uri(tracking_uri)
+        print(f"Connected to MLflow tracking server at {tracking_uri}")
+    except Exception:
+        print(f"WARNING: MLflow tracking server at {tracking_uri} is unreachable. Falling back to local './mlruns' directory.")
+        mlflow.set_tracking_uri("mlruns")
+else:
+    mlflow.set_tracking_uri(tracking_uri)
 
 def train_classical_models(X_train, y_train, X_val, y_val, X_test, y_test, do_tune, trials):
     """Trains and logs the classical models to MLflow."""
