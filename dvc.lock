@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python src/data/preprocessor.py
+    cmd: python -m src.data.preprocessor
     deps:
     - path: data/raw/diabetic_data.csv
       hash: md5
@@ -9,8 +9,8 @@ stages:
       size: 19368
     - path: src/data/preprocessor.py
       hash: md5
-      md5: 3bf6b5705b818c8e45ee7601d8cf79a0
-      size: 7652
+      md5: b9515a53d64b3b3698a05b8cce4929b5
+      size: 7796
     outs:
     - path: data/processed/
       hash: md5
@@ -19,5 +19,5 @@ stages:
       nfiles: 3
     - path: models/preprocessor.pkl
       hash: md5
-      md5: 4473b8ad8e5867acbb4530f061d11880
-      size: 4779
+      md5: 488d94de017a2a6f77f1c11779758377
+      size: 4827

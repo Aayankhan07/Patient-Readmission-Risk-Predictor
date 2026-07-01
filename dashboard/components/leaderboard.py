@@ -16,7 +16,7 @@ def render_leaderboard(models_data: list[dict]):
            ```
         2. Promote the champion model:
            ```bash
-           python scripts/promote_champion.py
+           python -m scripts.promote_champion
            ```
         """)
         return

@@ -1,6 +1,6 @@
 stages:
   prepare:
-    cmd: python src/data/preprocessor.py
+    cmd: python -m src.data.preprocessor
     deps:
       - data/raw/diabetic_data.csv
       - src/data/preprocessor.py
@@ -9,7 +9,7 @@ stages:
       - models/preprocessor.pkl
   
   train_classical:
-    cmd: python scripts/train_all.py --model-type classical
+    cmd: python -m scripts.train_all --model-type classical
     deps:
       - data/processed/
       - src/models/classical.py
@@ -17,7 +17,7 @@ stages:
       - mlruns/
   
   train_ann:
-    cmd: python scripts/train_all.py --model-type ann
+    cmd: python -m scripts.train_all --model-type ann
     deps:
       - data/processed/
       - src/models/ann.py

@@ -124,10 +124,10 @@ The pipeline defines three stages:
 The master training script allows for custom options bypass and hyperparameter search via **Optuna**:
 ```bash
 # Fast training with default parameters in params.yaml
-python scripts/train_all.py
+python -m scripts.train_all
 
 # Hyperparameter optimization (Tuning 10 Optuna trials per model family)
-python scripts/train_all.py --tune --trials 10
+python -m scripts.train_all --tune --trials 10
 ```
 
 ### Hyperparameter Configurations (`params.yaml`)
