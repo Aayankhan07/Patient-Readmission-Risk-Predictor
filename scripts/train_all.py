@@ -311,9 +311,9 @@ def main():
         
         # Save processed splits locally for DVC or reference
         os.makedirs(processed_dir, exist_ok=True)
-        X_train_res.assign(readmitted=y_train_res).to_csv(train_path, index=False)
-        X_val_scaled.assign(readmitted=y_val).to_csv(val_path, index=False)
-        X_test_scaled.assign(readmitted=y_test).to_csv(test_path, index=False)
+        X_train_res.assign(readmitted=y_train_res.values).to_csv(train_path, index=False)
+        X_val_scaled.assign(readmitted=y_val.values).to_csv(val_path, index=False)
+        X_test_scaled.assign(readmitted=y_test.values).to_csv(test_path, index=False)
 
     
     # 6. Execute Model Training
