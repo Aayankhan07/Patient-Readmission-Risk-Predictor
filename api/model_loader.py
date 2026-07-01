@@ -138,8 +138,13 @@ class ModelState:
             print("No models found in MLflow. Training and saving a dummy LogisticRegression model...")
             from sklearn.linear_model import LogisticRegression
             
-            # Train on synthetic data
-            dummy_target = np.random.choice([0, 1], size=100, p=[0.8, 0.2])
+            # Train on synthetic data matching background size
+            n_samples = len(self.X_background)
+            dummy_target = np.random.choice([0, 1], size=n_samples, p=[0.8, 0.2])
+            if len(np.unique(dummy_target)) < 2 and n_samples >= 2:
+                dummy_target[0] = 0
+                dummy_target[1] = 1
+                
             dummy_model = LogisticRegression(random_state=42)
             dummy_model.fit(self.X_background.values, dummy_target)
             
