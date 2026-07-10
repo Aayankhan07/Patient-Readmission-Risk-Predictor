@@ -21,7 +21,7 @@ CUSTOM_CSS = """
     --border-hairline: #DDDAD3;
 }
 
-html, body, [class*="css"] {
+html, body {
     font-family: 'IBM Plex Sans', sans-serif;
     color: var(--charcoal-900);
 }
@@ -58,6 +58,48 @@ h3 { font-size: 18px !important; font-family: 'IBM Plex Sans', sans-serif !impor
 [data-testid="stSidebar"] div[data-baseweb="input"] > div {
     background-color: #FFFFFF !important;
     border: 1px solid var(--border-hairline) !important;
+}
+
+/* Global Select Box styling (ensures high-contrast light background inputs) */
+div[data-baseweb="select"] div,
+div[data-testid="stSelectbox"] div,
+div[class*="stSelectbox"] div {
+    background-color: #FFFFFF !important;
+    border-color: var(--border-hairline) !important;
+}
+
+div[data-baseweb="select"] span,
+div[data-testid="stSelectbox"] span,
+div[class*="stSelectbox"] span {
+    color: var(--charcoal-900) !important;
+}
+
+div[data-baseweb="select"] svg,
+div[data-testid="stSelectbox"] svg,
+div[class*="stSelectbox"] svg {
+    fill: var(--charcoal-900) !important;
+}
+
+/* Style the dropdown menu options list */
+ul[role="listbox"] {
+    background-color: #FFFFFF !important;
+}
+ul[role="listbox"] li {
+    color: var(--charcoal-900) !important;
+    background-color: #FFFFFF !important;
+}
+ul[role="listbox"] li:hover {
+    background-color: var(--warm-grey-100) !important;
+}
+
+/* Sidebar Specific Input Text Colors override */
+[data-testid="stSidebar"] div[data-baseweb="select"] div,
+[data-testid="stSidebar"] div[data-testid="stSelectbox"] div {
+    background-color: #FFFFFF !important;
+}
+[data-testid="stSidebar"] div[data-baseweb="select"] span,
+[data-testid="stSidebar"] div[data-testid="stSelectbox"] span {
+    color: var(--charcoal-900) !important;
 }
 
 .clinical-card {
@@ -212,3 +254,4 @@ tr:nth-child(1) td {
     border-left: 3px solid var(--teal-600) !important;
 }
 </style>
+"""
