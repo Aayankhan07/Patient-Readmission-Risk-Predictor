@@ -1,5 +1,7 @@
+import os
 import streamlit as st
 import requests
+
 
 def render_sidebar():
     """Renders the Streamlit sidebar with navigation, API status checks and configs."""
@@ -9,20 +11,27 @@ def render_sidebar():
         "Readmission<br/>Risk Predictor</div>",
         unsafe_allow_html=True,
     )
-    
+
     # 1. Page Navigation
     page = st.sidebar.radio(
         "Navigation",
-        options=["Score Patient", "Bulk Upload", "Model Comparison", "About"],
+        options=[
+            "Score Patient",
+            "Bulk Upload",
+            "Model Comparison",
+            "Fairness & Drift",
+            "About",
+        ],
         label_visibility="collapsed",
     )
-    
+
     st.sidebar.divider()
-    
+
     # 2. API Configuration
     st.sidebar.subheader("Service Connection")
-    api_url = st.sidebar.text_input("FastAPI Base URL", value="http://localhost:8000")
-    
+    default_api_url = os.environ.get("API_URL", "http://localhost:8000")
+    api_url = st.sidebar.text_input("FastAPI Base URL", value=default_api_url)
+
     # 3. Connection Health Check
     try:
         response = requests.get(f"{api_url}/health", timeout=3)
@@ -36,13 +45,13 @@ def render_sidebar():
             st.sidebar.error("API Error Code")
     except Exception:
         st.sidebar.error("Prediction service unreachable.")
-        
+
     st.sidebar.divider()
-    
+
     # 4. Model Information
     st.sidebar.subheader("System Info")
     try:
-        models_resp = requests.get(f"{api_url}/models", timeout=3)
+        models_resp = requests.get(f"{api_url}/models", timeout=10)
         if models_resp.status_code == 200:
             models_data = models_resp.json()
             # Find the champion model in the models list
@@ -62,8 +71,8 @@ def render_sidebar():
                 st.sidebar.warning("No champion loaded.")
     except Exception:
         st.sidebar.caption("Could not load model info.")
-        
+
     st.sidebar.divider()
     st.sidebar.caption("PRRP v1.0.0 © June 2026")
-    
+
     return page, api_url
