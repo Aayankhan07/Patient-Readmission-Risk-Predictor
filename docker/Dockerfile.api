@@ -5,10 +5,16 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
 COPY src/ ./src/
 COPY api/ ./api/
 COPY models/ ./models/
-COPY data/processed/ ./data/processed/
+COPY data/ ./data/
+COPY params.yaml .
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
 
 EXPOSE 8000
 
