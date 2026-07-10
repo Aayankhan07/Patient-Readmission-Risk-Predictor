@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from src.data.preprocessor import ReadmissionPreprocessor
 
+
 def test_preprocessor_fit_transform():
     # 1. Arrange
     data = {
@@ -14,15 +15,15 @@ def test_preprocessor_fit_transform():
         "insulin": ["Steady", "No", "Up"],
         "diabetesMed": ["Yes", "No", "Yes"],
         "race": ["Caucasian", "?", "Hispanic"],
-        "gender": ["Female", "Male", "Female"]
+        "gender": ["Female", "Male", "Female"],
     }
     df = pd.DataFrame(data)
-    
+
     # 2. Act
     preprocessor = ReadmissionPreprocessor()
     preprocessor.fit(df)
     df_trans = preprocessor.transform(df)
-    
+
     # 3. Assert
     # Check that age column is ordinal encoded and numerical
     assert "age" in df_trans.columns
