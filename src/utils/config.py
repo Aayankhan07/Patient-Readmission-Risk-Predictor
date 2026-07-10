@@ -5,11 +5,13 @@ import yaml
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PARAMS_PATH = os.path.join(BASE_DIR, "params.yaml")
 
+
 def load_params():
     if not os.path.exists(PARAMS_PATH):
         raise FileNotFoundError(f"Configuration file not found at {PARAMS_PATH}")
     with open(PARAMS_PATH, "r") as f:
         return yaml.safe_load(f)
+
 
 PARAMS = load_params()
 
