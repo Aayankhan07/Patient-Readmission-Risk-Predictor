@@ -4,8 +4,10 @@ import numpy as np
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+
 try:
     from tensorflow.keras.models import Sequential
+
     HAS_TENSORFLOW = True
 except ImportError:
     Sequential = None
@@ -16,11 +18,13 @@ def get_shap_explainer(model, X_background: pd.DataFrame):
     """
     Returns an appropriate SHAP explainer based on the model type.
     """
-    # Sample background dataset if too large to speed up kernel/linear computations
-    if len(X_background) > 100:
-        X_bg_sampled = shap.sample(X_background, 100)
+    # Use K-Means to summarize background dataset if too large to speed up computations
+    if len(X_background) > 50:
+        kmeans_res = shap.kmeans(X_background, 50)
+        # Extract numpy array from DenseData if returned, else use as is
+        X_bg_sampled = kmeans_res.data if hasattr(kmeans_res, "data") else kmeans_res
     else:
-        X_bg_sampled = X_background
+        X_bg_sampled = X_background.values
 
     # Check model type
     if isinstance(model, (XGBClassifier, RandomForestClassifier)):
@@ -30,15 +34,20 @@ def get_shap_explainer(model, X_background: pd.DataFrame):
     elif HAS_TENSORFLOW and Sequential is not None and isinstance(model, Sequential):
         # TensorFlow Keras ANN
         # Convert background to float32 numpy array for TF
-        bg_array = X_bg_sampled.values.astype(np.float32)
+        bg_array = X_bg_sampled.astype(np.float32)
         return shap.DeepExplainer(model, bg_array)
     else:
         # Generic fallback
         # Use predict_proba for classification models
-        predict_fn = model.predict_proba if hasattr(model, "predict_proba") else model.predict
+        predict_fn = (
+            model.predict_proba if hasattr(model, "predict_proba") else model.predict
+        )
         return shap.KernelExplainer(predict_fn, X_bg_sampled)
 
-def explain_patient_shap(model, X_background: pd.DataFrame, patient_preprocessed: pd.DataFrame):
+
+def explain_patient_shap(
+    model, X_background: pd.DataFrame, patient_preprocessed: pd.DataFrame
+):
     """
     Generates SHAP values for a single patient.
     Returns:
@@ -46,7 +55,7 @@ def explain_patient_shap(model, X_background: pd.DataFrame, patient_preprocessed
         float: base/expected value
     """
     explainer = get_shap_explainer(model, X_background)
-    
+
     # Generate SHAP values for the patient row
     if HAS_TENSORFLOW and Sequential is not None and isinstance(model, Sequential):
         # Keras ANN case
@@ -79,18 +88,20 @@ def explain_patient_shap(model, X_background: pd.DataFrame, patient_preprocessed
         if isinstance(shap_vals, list):
             shap_vals = shap_vals[1] if len(shap_vals) > 1 else shap_vals[0]
         elif len(shap_vals.shape) == 3:
-            shap_vals = shap_vals[0, :, 1] if shap_vals.shape[2] > 1 else shap_vals[0, :, 0]
+            shap_vals = (
+                shap_vals[0, :, 1] if shap_vals.shape[2] > 1 else shap_vals[0, :, 0]
+            )
         elif len(shap_vals.shape) == 2 and shap_vals.shape[0] == 1:
             shap_vals = shap_vals[0]
-        
+
         shap_vals = shap_vals.flatten()
         base_val = explainer.expected_value
         if isinstance(base_val, (list, np.ndarray)):
             base_val = base_val[1] if len(base_val) > 1 else base_val[0]
         base_val = float(base_val)
-        
+
     # Map to features
     feature_names = patient_preprocessed.columns.tolist()
     shap_dict = {feat: float(val) for feat, val in zip(feature_names, shap_vals)}
-    
+
     return shap_dict, base_val
