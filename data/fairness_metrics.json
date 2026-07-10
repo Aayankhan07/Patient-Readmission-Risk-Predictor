@@ -1,0 +1,57 @@
+{
+    "race": [
+        {
+            "name": "Caucasian",
+            "sample_size": 12,
+            "accuracy": 1.0,
+            "roc_auc": 0.5,
+            "selection_rate": 0.0
+        },
+        {
+            "name": "Asian",
+            "sample_size": 0,
+            "accuracy": 0.0,
+            "roc_auc": 0.0,
+            "selection_rate": 0.0
+        },
+        {
+            "name": "Other",
+            "sample_size": 0,
+            "accuracy": 0.0,
+            "roc_auc": 0.0,
+            "selection_rate": 0.0
+        },
+        {
+            "name": "African American / Baseline",
+            "sample_size": 3,
+            "accuracy": 0.3333,
+            "roc_auc": 0.5,
+            "selection_rate": 0.3333
+        }
+    ],
+    "gender": [
+        {
+            "name": "Male",
+            "sample_size": 8,
+            "accuracy": 0.75,
+            "roc_auc": 0.7143,
+            "selection_rate": 0.125
+        },
+        {
+            "name": "Female",
+            "sample_size": 7,
+            "accuracy": 1.0,
+            "roc_auc": 0.5,
+            "selection_rate": 0.0
+        }
+    ],
+    "demographic_parity_ratio_race": {
+        "Caucasian": 0.0,
+        "Asian": 0.0,
+        "Other": 0.0,
+        "African American / Baseline": 6.666
+    },
+    "demographic_parity_ratio_gender": {
+        "Female_vs_Male": 0.4
+    }
+}
