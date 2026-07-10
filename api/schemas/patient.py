@@ -1,19 +1,43 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class PatientInput(BaseModel):
     """
     Patient demographics, admission details, and lab values.
     All secondary features have defaults matching dataset medians/modes.
     """
-    age: str = Field(default="[60-70)", description="Age bracket of the patient (e.g. [50-60), [60-70))")
-    time_in_hospital: int = Field(default=3, ge=1, le=14, description="Time spent in hospital in days")
-    num_procedures: int = Field(default=1, ge=0, le=6, description="Number of non-lab procedures during encounter")
-    num_medications: int = Field(default=15, ge=1, le=81, description="Number of distinct medications prescribed")
-    number_diagnoses: int = Field(default=9, ge=1, le=16, description="Number of diagnoses entered in system")
-    A1Cresult: str = Field(default="None", description="A1C lab result (e.g. None, Normal, >7, >8)")
-    insulin: str = Field(default="No", description="Insulin prescription status (e.g. No, Steady, Up, Down)")
-    diabetesMed: str = Field(default="No", description="Whether any diabetic medication was prescribed (Yes, No)")
-    
+
+    age: str = Field(
+        default="[60-70)",
+        description="Age bracket of the patient (e.g. [50-60), [60-70))",
+    )
+    time_in_hospital: int = Field(
+        default=3, ge=1, le=14, description="Time spent in hospital in days"
+    )
+    num_procedures: int = Field(
+        default=1,
+        ge=0,
+        le=6,
+        description="Number of non-lab procedures during encounter",
+    )
+    num_medications: int = Field(
+        default=15, ge=1, le=81, description="Number of distinct medications prescribed"
+    )
+    number_diagnoses: int = Field(
+        default=9, ge=1, le=16, description="Number of diagnoses entered in system"
+    )
+    A1Cresult: str = Field(
+        default="None", description="A1C lab result (e.g. None, Normal, >7, >8)"
+    )
+    insulin: str = Field(
+        default="No",
+        description="Insulin prescription status (e.g. No, Steady, Up, Down)",
+    )
+    diabetesMed: str = Field(
+        default="No",
+        description="Whether any diabetic medication was prescribed (Yes, No)",
+    )
+
     # Secondary features with defaults
     race: str = "Caucasian"
     gender: str = "Female"
@@ -49,14 +73,16 @@ class PatientInput(BaseModel):
     citoglipton: str = "No"
     glyburide_metformin: str = Field(default="No", alias="glyburide-metformin")
     glipizide_metformin: str = Field(default="No", alias="glipizide-metformin")
-    glimepiride_pioglitazone: str = Field(default="No", alias="glimepiride-pioglitazone")
+    glimepiride_pioglitazone: str = Field(
+        default="No", alias="glimepiride-pioglitazone"
+    )
     metformin_rosiglitazone: str = Field(default="No", alias="metformin-rosiglitazone")
     metformin_pioglitazone: str = Field(default="No", alias="metformin-pioglitazone")
     change: str = "No"
 
-    class Config:
-        populate_by_name = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
             "example": {
                 "age": "[60-70)",
                 "time_in_hospital": 5,
@@ -65,6 +91,7 @@ class PatientInput(BaseModel):
                 "number_diagnoses": 7,
                 "A1Cresult": ">8",
                 "insulin": "Steady",
-                "diabetesMed": "Yes"
+                "diabetesMed": "Yes",
             }
-        }
+        },
+    )
