@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict, List
 
+
 class PredictionResponse(BaseModel):
     patient_id: str
     risk_score: float
@@ -8,12 +9,14 @@ class PredictionResponse(BaseModel):
     model_version: str
     inference_ms: float
 
+
 class ExplainResponse(BaseModel):
     patient_id: str
     shap_values: Dict[str, float]
     top_risk_factors: List[str]
     base_value: float
     lime_html: str
+
 
 class ModelInfo(BaseModel):
     name: str
@@ -23,6 +26,7 @@ class ModelInfo(BaseModel):
     f1: float
     accuracy: float
     is_champion: bool
+
 
 class ModelsResponse(BaseModel):
     models: List[ModelInfo]
