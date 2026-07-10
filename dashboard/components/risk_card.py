@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def get_tier_color(tier: str) -> str:
     """Returns the design system color hex for a given risk tier."""
     if tier == "low":
@@ -9,11 +10,12 @@ def get_tier_color(tier: str) -> str:
     else:
         return "#E76F51"  # amber-600
 
+
 def render_risk_card(score: float, tier: str, inference_ms: float):
     """Renders a flat, hairline-bordered clinical risk card with left highlight."""
     color = get_tier_color(tier)
     percent = score * 100
-    
+
     card_html = f"""
     <div style="
         background: #FFFFFF;
@@ -57,11 +59,12 @@ def render_risk_card(score: float, tier: str, inference_ms: float):
     """
     st.markdown(card_html, unsafe_allow_html=True)
 
+
 def render_gauge_chart(score: float, tier: str):
     """Renders a calibrated horizontal risk dial modeled on clinical instrument scales."""
     color = get_tier_color(tier)
     percent = score * 100
-    
+
     dial_html = f"""
     <div style="
         font-family: 'IBM Plex Sans', sans-serif; 
