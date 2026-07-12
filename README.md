@@ -9,7 +9,7 @@
 
 🏥 **Patient Readmission Risk Predictor (PRRP)** is a production-grade, end-to-end Machine Learning platform designed to predict the likelihood of diabetic patients being readmitted to the hospital within 30 days of discharge. 
 
-The platform implements a comparative model selection process between a classical ML family (Logistic Regression, Random Forest, XGBoost) and a deep learning artificial neural network (ANN). Runs, parameters, artifacts, and metrics are tracked via **MLflow**, data pipelines are orchestrated using **DVC**, and explanations (SHAP & LIME) are served via a **FastAPI** backend to a modern, clinical **Streamlit** dashboard.
+The platform implements a comparative model selection process between a classical ML family (Logistic Regression, Random Forest, XGBoost, and the Stacking Classifier ensemble) and a deep learning artificial neural network (ANN). Runs, parameters, artifacts, and metrics are tracked via **MLflow**, data pipelines are orchestrated using **DVC**, explanation payloads (SHAP & LIME) are handled asynchronously via a **FastAPI** backend with a **Redis** cache layer, and audit assessments are logged in a compliance **SQLite** database. These results are served dynamically to a modern Streamlit dashboard.
 
 ---
 
@@ -26,25 +26,75 @@ The platform is fully containerized and orchestrated via Docker Compose:
  │  │  Streamlit Dashboard  │ ───────▶ │  FastAPI Web App    │ ───▶ │  MLflow Server   │  │
  │  │  (Clinician View)     │          │  (Port 8000)        │      │  (Port 5000)     │  │
  │  │  - Score Patient      │          │                     │      │                  │  │
- │  │  - Bulk CSV Upload    │          │  - ModelState       │      └──────────┬───────┘  │
- │  │  - Model Leaderboard  │          │    Manager          │                 │          │
+ │  │  - Bulk CSV Upload    │          │  - Background Queue │      └──────────┬───────┘  │
+ │  │  - Model Leaderboard  │          │  - SQLite Audit Logs│                 │          │
  │  │  (Port 8501)          │          │                     │                 │          │
- │  └───────────────────────┘          └──────────┬──────────┘                 │          │
- │                                                │                            │          │
- │                                                ▼                            ▼          │
- │                                     ┌─────────────────────┐      ┌──────────────────┐  │
- │                                     │                     │      │                  │  │
- │                                     │    Preprocessor     │      │  Artifact Store  │  │
- │                                     │    (joblib pkl)     │      │  ./mlruns/       │  │
+ │  │                       │          └──────────┬──────────┘                 │          │
+ │  └───────────▲───────────┘                     │                            │          │
+ │              │                                 ▼                            ▼          │
+ │              │                      ┌─────────────────────┐      ┌──────────────────┐  │
+ │              │                      │                     │      │                  │  │
+ │              └───────────────────── │    Redis Cache      │      │  Artifact Store  │  │
+ │                                     │    (Port 6379)      │      │  /app/mlruns/    │  │
  │                                     │                     │      │                  │  │
  │                                     └─────────────────────┘      └──────────────────┘  │
  └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 🔁 End-to-End System Dataflow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Clinician as Clinician (Dashboard)
+    participant Streamlit as Streamlit Frontend
+    participant API as FastAPI Router
+    participant Loader as ModelState Singleton
+    participant Pre as ReadmissionPreprocessor
+    participant SHAP as SHAP Explainer Wrapper
+    participant LIME as LIME Explainer Wrapper
+    participant Registry as MLflow Tracking Server
+
+    Clinician->>Streamlit: Click "Calculate Risk & Explain"
+    Note over Streamlit: Read inputs (Age, Medications, Lab Results)
+    Streamlit->>API: HTTP POST /predict {patient_payload}
+    
+    API->>Loader: Check model status
+    API->>Pre: transform(df_raw)
+    Note over Pre: Impute missing values,<br/>apply scaling & one-hot encoding
+    Pre-->>API: df_preprocessed
+    
+    API->>Loader: predict_proba(df_preprocessed)
+    Note over Loader: Run forward-pass inference<br/>on the active champion model
+    Loader-->>API: risk_score (float)
+    
+    Note over API: Store df_raw and df_preprocessed<br/>in Redis cache under patient ID
+    API-->>Streamlit: JSON {patient_id, risk_score, risk_tier, inference_ms}
+    Streamlit->>Clinician: Render Risk Metric Card & Dial (Teal/Amber/Red)
+    
+    Streamlit->>API: HTTP GET /explain/{patient_id}
+    API->>Loader: Retrieve cached df_preprocessed & X_background
+    
+    API->>SHAP: explain_patient_shap(model, X_background, df_preprocessed)
+    Note over SHAP: Initialize Tree/Linear/Deep Explainer,<br/>calculate feature-wise SHAP values
+    SHAP-->>API: shap_values (dict), base_value (float)
+    
+    API->>LIME: explain_patient_lime(model, X_background, df_preprocessed)
+    Note over LIME: Wrap model predict function,<br/>fit tabular local explainer
+    LIME-->>API: lime_html (HTML string)
+    
+    API-->>Streamlit: JSON {shap_values, top_factors, base_value, lime_html}
+    Note over Streamlit: Render interactive Plotly SHAP chart<br/>and LIME explanation iframe
+    Streamlit->>Clinician: Display Diagnostics charts
+```
+
+## 🚀 Quick Navigation
+* 📈 **[Model Card & Fairness Audits](file:///d:/PROJECT%20REPOS/Patient%20Readmission%20Risk%20Predictor/MODEL_CARD.md)**: Read the clinical intended use, subgroup metrics performance breakdown (with sample count $n$ sizes), and ethical limitations.
+* ☁️ **[Cloud Deployment & Infrastructure (IaC)](file:///d:/PROJECT%20REPOS/Patient%20Readmission%20Risk%20Predictor/DEPLOYMENT.md)**: Setup guide and Terraform configurations (`main.tf`) for deploying to Google Cloud Run and AWS ECS Fargate container instances.
+
 ### 🛡️ Robust Model Loading & Fallback Strategy
 When the FastAPI server starts, its lifecycle manager (`lifespan`) initializes a singleton `ModelState` that handles model resolving automatically, following a strict fallback sequence:
-1. **MLflow Production Registry**: Attempts to download the registered champion model (`readmission_champion` in `Production` stage).
-2. **Local Runs Directory Scanning**: If the MLflow server is offline or empty, it scans the local `./mlruns` directory, filters for all runs containing `pr_auc`, sorts them in descending order, and loads the best run as a local champion.
+1. **MLflow Production Registry**: Attempts connection to `http://mlflow:5000` to fetch the model version assigned the **`champion`** alias for the registry model `readmission_champion`.
+2. **Local Runs Directory Scanning**: If the MLflow server is offline, empty, or lacks a champion alias, it scans the `/app/mlruns` directory (bound to host `./mlruns`), filters for all runs containing `pr_auc`, sorts them in descending order, and loads the best run as a local champion.
 3. **Automated Fallback Training**: If no runs are found locally, the server dynamically generates synthetic training data, fits a `ReadmissionPreprocessor`, trains a baseline `LogisticRegression` model, and loads it. **This ensures the API remains fully functional and robust even in a completely fresh sandbox.**
 
 ---
@@ -56,8 +106,9 @@ When the FastAPI server starts, its lifecycle manager (`lifespan`) initializes a
 ├── api/                       # FastAPI serving layer
 │   ├── routes/                # Endpoint routers (health, predict, explain)
 │   ├── schemas/               # Pydantic request and response schemas
+│   ├── utils/                 # Logging and compliance utilities (audit.py)
 │   ├── main.py                # FastAPI entrypoint and lifespan management
-│   └── model_loader.py        # ModelState singleton & MLflow loading fallback logic
+│   └── model_loader.py        # ModelState singleton, Redis client & MLflow loading fallback logic
 ├── dashboard/                 # Streamlit clinician frontend
 │   ├── components/            # UI components (sidebar, risk card, charts, leaderboard)
 │   ├── styles.py              # Clinical visual theme and CSS overrides
@@ -69,9 +120,9 @@ When the FastAPI server starts, its lifecycle manager (`lifespan`) initializes a
 │   ├── Dockerfile.api         # FastAPI container
 │   ├── Dockerfile.dashboard   # Streamlit container
 │   └── Dockerfile.mlflow      # MLflow server container
-├── models/                    # Serialized local artifacts (preprocessor.pkl)
+├── models/                    # Serialized local preprocessor models
 ├── scripts/                   # Model training and orchestration pipelines
-│   ├── promote_champion.py    # Standalone script to register/promote the best run
+│   ├── promote_champion.py    # Script to register and promote the champion in MLflow
 │   └── train_all.py           # Master training & evaluation script
 ├── src/                       # Core ML package modules
 │   ├── data/                  # Loader, preprocessor, and splitter modules
@@ -80,7 +131,7 @@ When the FastAPI server starts, its lifecycle manager (`lifespan`) initializes a
 │   ├── models/                # Classical estimators, ANN builder, and Optuna tuner
 │   └── utils/                 # Parameter configuration loaders
 ├── tests/                     # Unit test suite
-├── docker-compose.yml         # Container orchestrator
+├── docker-compose.yml         # Container orchestrator (spins up Redis, API, MLflow, Dashboard)
 ├── dvc.yaml                   # Data version control pipeline stages
 ├── params.yaml                # Global parameters (data splits, model parameters, networks)
 └── requirements.txt           # Main python dependency manifest
@@ -114,7 +165,7 @@ dvc dag
 
 The pipeline defines three stages:
 1. **`prepare`**: Loads `data/raw/diabetic_data.csv`, cleans features, splits data stratifiably (70/15/15), fits the `ReadmissionPreprocessor`, exports `models/preprocessor.pkl`, and saves processed splits under `data/processed/`.
-2. **`train_classical`**: Trains Logistic Regression, Random Forest, and XGBoost models, logs metrics, plots, and models to MLflow.
+2. **`train_classical`**: Trains Logistic Regression, Random Forest, XGBoost, and the Stacking Classifier ensemble. Logs metrics, plots, and models to MLflow.
 3. **`train_ann`**: Compiles and trains the Keras Artificial Neural Network with Early Stopping and logs the training curves to MLflow.
 
 ---
@@ -141,26 +192,28 @@ Parameters are controlled globally from [params.yaml](file:///c:/Users/Adeen/One
 ## 5. Running the Serving Architecture
 
 ### 5.1 Run with Docker Compose (Recommended)
-Build and spin up MLflow, FastAPI, and Streamlit services within a virtual network using:
+Build and spin up Redis, MLflow, FastAPI, and Streamlit dashboard services within a virtual network using:
 ```bash
 docker compose up --build
 ```
 * **FastAPI Docs UI**: `http://localhost:8000/docs`
 * **Streamlit Dashboard UI**: `http://localhost:8501`
 * **MLflow Tracking UI**: `http://localhost:5000`
+* **Redis Caching Container**: `localhost:6379` (Internal service port)
 
 ### 5.2 Start Services Standalone
 If you prefer running services directly on your host:
 
-1. **Start MLflow Tracking Server:**
+1. **Start Redis Server locally** (ensure a Redis server is listening on port 6379).
+2. **Start MLflow Tracking Server:**
    ```bash
    mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
    ```
-2. **Start FastAPI Service:**
+3. **Start FastAPI Service:**
    ```bash
    uvicorn api.main:app --host 0.0.0.0 --port 8000
    ```
-3. **Start Streamlit Clinician Dashboard:**
+4. **Start Streamlit Clinician Dashboard:**
    ```bash
    streamlit run dashboard/app.py --server.port=8501
    ```
@@ -188,12 +241,12 @@ Retrieves a list of all logged runs and registered models in MLflow, sorted by `
   {
     "models": [
       {
-        "name": "Xgboost",
+        "name": "Keras Ann",
         "stage": "Production",
-        "pr_auc": 0.742,
-        "roc_auc": 0.812,
-        "f1": 0.658,
-        "accuracy": 0.792,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0,
+        "f1": 0.0,
+        "accuracy": 0.933,
         "is_champion": true
       }
     ]
@@ -201,7 +254,7 @@ Retrieves a list of all logged runs and registered models in MLflow, sorted by `
   ```
 
 ### `POST /predict`
-Scores a patient's risk profile. Unspecified secondary features are set to historical database medians.
+Scores a patient's risk profile, registers background tasks to perform SHAP and LIME computations, and logs the assessment in the HIPAA audit database.
 * **Request Body Example:**
   ```json
   {
@@ -221,14 +274,14 @@ Scores a patient's risk profile. Unspecified secondary features are set to histo
     "patient_id": "8f8303d9-9abf-4be1-987d-419b4ea4e857",
     "risk_score": 0.68,
     "risk_tier": "high",
-    "model_version": "xgboost_run_8f8303d9",
+    "model_version": "keras_ann_run_8f8303d9",
     "inference_ms": 12.45
   }
   ```
 
 ### `GET /explain/{patient_id}`
-Computes SHAP waterfall impacts and LIME interactive local visual structures for a cached prediction.
-* **Response:**
+Retrieves background-calculated LIME and SHAP visual explanations from the Redis cache. Returns a `202 Accepted` status if the task is still running, or `200 OK` with the complete payload when done.
+* **Response Example (Completed):**
   ```json
   {
     "patient_id": "8f8303d9-9abf-4be1-987d-419b4ea4e857",
@@ -250,12 +303,14 @@ The dashboard provides a premium medical decision support workspace:
 1. **Score Patient Tab**:
    * Renders real-time demographic and diagnostic inputs via sliders and dropdowns.
    * Renders a clean **Risk Assessment Card** detailing probability, tier bounds, and latency.
+   * Includes a **What-If Risk Sandbox** allowing clinicians to interactively alter variables (e.g. adjust medication levels) and see risk score impacts immediately.
    * Displays an interactive **SHAP Feature Contribution Plot** showing individual feature weights driving the current risk score.
    * Embeds an interactive **LIME Explanation HTML frame** indicating local decision boundary approximations.
 2. **Bulk CSV Upload Tab**:
    * Accepts multiple patient profiles in a CSV formatted file.
    * Validates dataset formatting and handles missing values.
    * Evaluates records asynchronously and generates a downloadable scored dataset with `Risk Score` and `Risk Tier`.
+   * Integrates an interactive Plotly analytics dashboard (pie charts, distributions, high-risk patient lists) for cohort analysis.
 3. **Model Comparison Tab**:
    * Fetches the run leaderboard from MLflow and displays a comparative metrics table.
    * Outlines relative metrics (PR-AUC, ROC-AUC, F1, Accuracy) of all trained runs to assist in clinical audits.
@@ -264,13 +319,13 @@ The dashboard provides a premium medical decision support workspace:
 
 ## 8. Run Unit Tests & CI/CD
 
-Verify the test suite for preprocessor scaling, prediction logic, metrics calculations, and API contracts by executing:
+Verify the test suite (preprocessor scaling, prediction logic, metrics calculations, and API contracts) directly inside the container by executing:
 ```bash
-pytest tests/ -v
+docker compose exec api pytest tests/ -v
 ```
 
 ### GitHub Actions CI Workflow
-The repository utilizes a CI workflow located at [.github/workflows/ci.yml](file:///c:/Users/Adeen/OneDrive/Desktop/Patient%20Readmission%20Risk%20Predictor/.github/workflows/ci.yml) that automatically runs on every push and pull request to the `main` branch. The job performs the following:
+The repository utilizes a CI workflow located at [.github/workflows/ci.yml](file:///d:/PROJECT REPOS/Patient Readmission Risk Predictor/.github/workflows/ci.yml) that automatically runs on every push and pull request to the `main` branch. The job performs the following:
 1. Spins up an `ubuntu-latest` runner.
 2. Installs Python 3.10.
 3. Installs package dependencies via `pip`.
